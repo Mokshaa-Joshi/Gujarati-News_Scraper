@@ -1,99 +1,80 @@
-import streamlit as st
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
+import streamlit as st
 
-st.set_page_config(
-    page_title="News Scraper",
-    page_icon="🌐"
-)
+# Function to scrape articles from BBC News
+def fetch_articles():
+    url = "https://www.bbc.com/news"
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception("Failed to load page")
+    soup = BeautifulSoup(response.content, "html.parser")
 
-st.markdown(
-    """
-<h1 style='text-align:center'>News Scraper</h1>
-""",
-    unsafe_allow_html=True,
-)
-st.write("##")
+    articles = []
+    for item in soup.find_all("div", class_="gs-c-promo"):
+        headline = item.find("h3").text if item.find("h3") else None
+        link = item.find("a", href=True)["href"] if item.find("a", href=True) else None
+        summary = item.find("p").text if item.find("p") else None
+        if headline and link:
+            articles.append({
+                "headline": headline,
+                "link": "https://www.bbc.com" + link,
+                "summary": summary
+            })
+    return articles
 
-#st.image("news_img.png", use_column_width="auto")
-st.write("##")
+# Function to search articles based on a keyword
+def search_articles(articles, keyword):
+    return [
+        article for article in articles
+        if keyword.lower() in article["headline"].lower() or 
+           (article["summary"] and keyword.lower() in article["summary"].lower())
+    ]
 
-st.write("## Select the Date: ")
-st.write("##")
+# Streamlit app
+def main():
+    st.set_page_config(page_title="BBC News Article Search", page_icon="📰", layout="wide")
 
-year, month, day = st.columns(3)
-year_select = year.selectbox("Select year:", options=["2025", "2024", "2023", "2022"])
-month_select = month.selectbox(
-    "Select month:",
-    options=[
-        "january",
-        "february",
-        "march",
-        "april",
-        "may",
-        "june",
-        "july",
-        "august",
-        "september",
-        "october",
-        "november",
-        "december",
-    ],
-)
-day_select = day.selectbox("Select day: ", options=[str(i).zfill(2) for i in range(1, 32)])
-st.write("##")
-toggle_btn = st.toggle("Hindi")
-st.write("##")
+    # App title and description
+    st.title("📰 BBC News Article Search")
+    st.markdown(
+        """
+        Welcome to the **BBC News Article Search** app!  
+        Enter a keyword below to find related news articles scraped directly from the BBC News website.
+        """
+    )
 
-Scrap_btn = st.button("Scrap")
+    # Search bar
+    keyword = st.text_input("🔍 Enter a keyword to search for news articles:")
 
-st.write("##")
-str_date = str(day_select)
-if str_date[-1] == "1" and str_date != "11":
-    st.write(f"### News for the date {day_select}st {month_select}, {year_select}")
-elif str_date[-1] == "2" and str_date != "12":
-    st.write(f"### News for the date {day_select}nd {month_select}, {year_select}")
-elif str_date[-1] == "3" and str_date != "13":
-    st.write(f"### News for the date {day_select}rd {month_select}, {year_select}")
-else:
-    st.write(f"### News for the date {day_select}th {month_select}, {year_select}")
+    # Search button
+    if st.button("Search"):
+        if not keyword.strip():
+            st.warning("Please enter a keyword to search.")
+        else:
+            with st.spinner("Fetching articles..."):
+                try:
+                    articles = fetch_articles()
+                    filtered_articles = search_articles(articles, keyword)
 
-box_style = """
-    <style>
-        .custom-box {
-            padding: 10px;
-            border: 2px solid white;
-            border-radius: 10px;
-            background-color: black;
-            color: white;
-            margin-bottom: 10px;
-        }
-        .custom-box a {
-            color: #00FFFF !important;
-            text-decoration: none !important;
-            font-weight: bold !important;
-        }
-    </style>
-"""
+                    if filtered_articles:
+                        st.success(f"Found {len(filtered_articles)} articles for '{keyword}'")
+                        for article in filtered_articles:
+                            st.markdown(f"### [{article['headline']}]({article['link']})")
+                            st.write(article['summary'] if article['summary'] else "No summary available.")
+                            st.markdown("---")
+                    else:
+                        st.warning(f"No articles found for '{keyword}'. Try a different keyword.")
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
 
-count = 1
-if Scrap_btn:
-    base_url = "https://www.gujaratsamachar.com/"
-    req = requests.get(base_url)
-    if req.status_code == 200:
-        soup = BeautifulSoup(req.text, "html.parser")
-        # Find news articles
-        news_list = soup.find_all("div", class_="big-news-box")
-        for news_item in news_list:
-            a_tag = news_item.find("a")
-            if a_tag:
-                news_title = a_tag.get_text(strip=True)
-                href_link = base_url + a_tag["href"]
-                st.markdown(box_style, unsafe_allow_html=True)
-                st.markdown(
-                    f"""<div class="custom-box">{count}- <a href="{href_link}" target="_blank">{news_title}</a></div>""",
-                    unsafe_allow_html=True,
-                )
-                count += 1
-    else:
-        st.error("Unable to fetch data. Please try again later.")
+    # Footer
+    st.markdown(
+        """
+        ---
+        Made with ❤️ using [Streamlit](https://streamlit.io) and [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/).
+        """
+    )
+
+if __name__ == "__main__":
+    main()
