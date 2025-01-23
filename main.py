@@ -35,6 +35,11 @@ def scrape_articles():
 # Scrape the full article content from the article page
 def scrape_article_content(link):
     try:
+        # If the link is relative, prepend the base URL
+        if link.startswith('/'):
+            base_url = "https://www.gujaratsamachar.com"
+            link = base_url + link
+
         # Send request to the article page
         article_response = requests.get(link)
         if article_response.status_code != 200:
