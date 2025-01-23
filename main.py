@@ -18,8 +18,8 @@ def fetch_articles(keyword=None):
     news_list = []
 
     # Extract articles
-    for news in soup.find_all('div', class_='gs-c-promo'):
-        headline = news.find('h3', class_='gs-c-promo-heading__title')
+    for news in soup.find_all('div', class_='sc-8ea7699c-'):
+        headline = news.find('h2', class_='sc-8ea7699c-3 hlhXXQ')
         date = news.find('time', class_='qa-status-date')
 
         if headline:
