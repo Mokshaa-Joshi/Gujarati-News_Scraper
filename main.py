@@ -17,7 +17,7 @@ def scrape_articles():
     articles = []
     for article in soup.find_all('div', class_='news-box'):  # Example: Update the class to match the actual site
         title = article.find('a', class_='theme-link news-title').text.strip()
-        link = article.find('a', class_='theme-link')['href']
+        link = article.find('a')['href']
         summary = article.find('p').text.strip() if article.find('p') else ""
         
         # Scrape full content of the article
@@ -85,7 +85,7 @@ def main():
             st.subheader(f"Search Results for '{query}':")
             for article in filtered_articles:
                 # Use HTML to create a clickable link that opens in a new tab
-                #st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
+                st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
                 st.write(article['summary'])
                 st.write(article['content'])  # Display the full article content
         else:
