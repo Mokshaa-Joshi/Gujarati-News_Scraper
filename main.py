@@ -20,11 +20,11 @@ def fetch_articles(keyword=None):
     # Extract articles
     for news in soup.find_all('div', class_='sc-8ea7699c-'):
         headline = news.find('h2', class_='sc-8ea7699c-3 hlhXXQ')
-        date = news.find('time', class_='qa-status-date')
+        #date = news.find('time', class_='qa-status-date')
 
         if headline:
             news_title = headline.get_text().strip()
-            news_date = date.get_text().strip() if date else "Date not available"
+            #news_date = date.get_text().strip() if date else "Date not available"
 
             # Filter out irrelevant entries
             if 'bbc' not in news_title.lower():
