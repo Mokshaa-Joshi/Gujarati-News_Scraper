@@ -50,7 +50,7 @@ def scrape_article_content(link):
         content_div = article_soup.find('div')  # Try targeting the first div
         if not content_div:
             # If no div found, look for paragraphs or other text-containing elements
-            content_elements = article_soup.find_all(['p', 'h1', 'h2', 'h3', 'ul', 'ol'])
+            content_elements = article_soup.find_all(['p'])
             content = ' '.join([element.get_text().strip() for element in content_elements])
         else:
             # If a div is found, extract its content
