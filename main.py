@@ -55,16 +55,32 @@ def scrape_article_content(link):
         
         content_in_gujarati = re.sub(r'[^\u0A80-\u0AFF\s]', '', content)
         
-        date_div = article_soup.find('span', class_='news_date')  # Updated to match class name more accurately
-        date = date_div.text.strip() if date_div else ""
-        
+        date = ""
         day = ""
+        
+        date_div = article_soup.find('span', class_='news_date')  
+        if date_div:
+            date = date_div.text.strip()
+        
         if date:
             try:
                 date_obj = datetime.strptime(date, '%d-%m-%Y')
                 day = date_obj.strftime('%A')
             except:
                 pass
+        
+        if not date:
+            date_divs = article_soup.find_all('p', class_='text-muted mb-0')  
+            for div in date_divs:
+                possible_date = div.get_text(strip=True)
+                if re.match(r'\d{1,2}-\d{1,2}-\d{4}', possible_date):
+                    date = possible_date
+                    try:
+                        date_obj = datetime.strptime(date, '%d-%m-%Y')
+                        day = date_obj.strftime('%A')
+                    except:
+                        pass
+                    break
         
         return content_in_gujarati, date, day
     except Exception as e:
