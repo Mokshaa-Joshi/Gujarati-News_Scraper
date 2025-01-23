@@ -33,6 +33,7 @@ def scrape_articles():
     return articles
 
 # Scrape the full article content from the article page
+# Scrape the full article content from the article page
 def scrape_article_content(link):
     try:
         # If the link is relative, prepend the base URL
@@ -47,13 +48,20 @@ def scrape_article_content(link):
         
         article_soup = BeautifulSoup(article_response.content, 'html.parser')
         
-        # Find the content using the correct selector for the article body
-        content_div = article_soup.find('div', class_='article-body')  # Modify this selector based on actual structure
-        content = content_div.text.strip() if content_div else "Content not available."
+        # Try finding the article body in different ways if no class is available
+        content_div = article_soup.find('div')  # Try targeting the first div
+        if not content_div:
+            # If no div found, look for paragraphs or other text-containing elements
+            content_elements = article_soup.find_all(['p', 'h1', 'h2', 'h3', 'ul', 'ol'])
+            content = ' '.join([element.get_text().strip() for element in content_elements])
+        else:
+            # If a div is found, extract its content
+            content = content_div.text.strip() if content_div else "Content not available."
         
         return content
     except Exception as e:
         return f"Error: {e}"
+
 
 # Search articles based on the query
 def search_articles(query, articles):
