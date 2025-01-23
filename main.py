@@ -33,7 +33,6 @@ def scrape_articles():
     return articles
 
 # Scrape the full article content from the article page
-# Scrape the full article content from the article page
 def scrape_article_content(link):
     try:
         # If the link is relative, prepend the base URL
@@ -62,7 +61,6 @@ def scrape_article_content(link):
     except Exception as e:
         return f"Error: {e}"
 
-
 # Search articles based on the query
 def search_articles(query, articles):
     return [article for article in articles if query.lower() in article['title'].lower() or query.lower() in article['summary'].lower()]
@@ -86,7 +84,8 @@ def main():
         if filtered_articles:
             st.subheader(f"Search Results for '{query}':")
             for article in filtered_articles:
-                st.markdown(f"### [{article['title']}]({article['link']})")
+                # Use HTML to create a clickable link that opens in a new tab
+                st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
                 st.write(article['summary'])
                 st.write(article['content'])  # Display the full article content
         else:
