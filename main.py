@@ -18,7 +18,7 @@ def scrape_articles():
     for article in soup.find_all('div', class_='news-box'):  # Example: Update the class to match the actual site
         title = article.find('a', class_='theme-link news-title').text.strip()
         link = article.find('a')['href']
-        summary = article.find('p').text.strip() if article.find('p') else ""
+        summary = article.find('p style="text-align: justify;').text.strip() if article.find('p style="text-align: justify;') else ""
         
         # Scrape full content of the article
         content = scrape_article_content(link)
