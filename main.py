@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import streamlit as st
 from deep_translator import GoogleTranslator
 import re
+from datetime import datetime
 
 def scrape_articles():
     base_url = "https://www.gujaratsamachar.com/"
@@ -87,8 +88,9 @@ def main():
         filtered_articles = search_articles(translated_query, articles)
         if filtered_articles:
             st.subheader(f"Search Results for '{query}':")
+            today_date = datetime.now().strftime("%B %d, %Y")
             for article in filtered_articles:
-                st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
+                st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a> - {today_date}", unsafe_allow_html=True)
                 st.write(article['summary'])
                 st.write(article['content'])
         else:
