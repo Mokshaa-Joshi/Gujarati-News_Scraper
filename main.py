@@ -19,23 +19,23 @@ def scrape_articles():
         link = article.find('a', class_='theme-link')['href']
         summary = article.find('p').text.strip() if article.find('p') else ""
         
+        if link.startswith('/'):
+            link = base_url + link
+        
         content = scrape_article_content(link)
         
-        articles.append({
-            'title': title,
-            'link': link,
-            'summary': summary,
-            'content': content
-        })
+        if title and link and content:
+            articles.append({
+                'title': title,
+                'link': link,
+                'summary': summary,
+                'content': content
+            })
     
     return articles
 
 def scrape_article_content(link):
     try:
-        if link.startswith('/'):
-            base_url = "https://www.gujaratsamachar.com"
-            link = base_url + link
-
         article_response = requests.get(link)
         if article_response.status_code != 200:
             return "Error loading article content."
@@ -53,10 +53,12 @@ def scrape_article_content(link):
     except Exception as e:
         return f"Error: {e}"
 
-def translate_query(query, lang="gu"):
-    if lang != "en":
-        return GoogleTranslator(source='auto', target=lang).translate(query)
-    return query
+def translate_to_gujarati(query):
+    try:
+        translated_query = GoogleTranslator(source='en', target='gu').translate(query)
+        return translated_query
+    except Exception as e:
+        return f"Translation Error: {e}"
 
 def search_articles(query, articles):
     return [article for article in articles if query.lower() in article['title'].lower() or query.lower() in article['summary'].lower()]
@@ -67,25 +69,27 @@ def main():
 
     query = st.text_input("Search for articles", "")
     
+    if query:
+        translated_query = translate_to_gujarati(query)
+        st.write(f"Translated query (Gujarati): {translated_query}")
+    else:
+        translated_query = ""
+
     articles = scrape_articles()
     if not articles:
         st.warning("No articles found. Please try again later.")
         return
     
-    if query:
-        translated_query = translate_query(query, lang="gu")
-        st.write(f"Searching for: {translated_query}")
-        
+    if translated_query:
         filtered_articles = search_articles(translated_query, articles)
-        
         if filtered_articles:
-            st.subheader(f"Search Results for '{translated_query}':")
+            st.subheader(f"Search Results for '{query}':")
             for article in filtered_articles:
-                st.markdown(f"### [{article['title']}]({article['link']})")
+                st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
                 st.write(article['summary'])
                 st.write(article['content'])
         else:
-            st.warning(f"No articles found for '{translated_query}'.")
+            st.warning(f"No articles found for '{query}'.")
     else:
         st.info("Please enter a search term.")
 
