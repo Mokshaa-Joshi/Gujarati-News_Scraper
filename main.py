@@ -6,12 +6,12 @@ import pandas as pd
 
 # Function to scrape articles from BBC News
 def fetch_articles(keyword=None):
-    # BBC News URL
     url = 'https://www.bbc.com/news'
     headers = {'User-agent': 'Mozilla/5.0'}
     response = requests.get(url, headers=headers)
+    
     if response.status_code != 200:
-        raise Exception("Failed to fetch BBC News page.")
+        raise Exception(f"Failed to fetch BBC News page (status code: {response.status_code}).")
     
     # Parse the HTML content
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -22,13 +22,18 @@ def fetch_articles(keyword=None):
         headline = news.find('h3', class_='gs-c-promo-heading__title')
         date = news.find('time', class_='qa-status-date')
 
-        if headline and date:
+        if headline:
             news_title = headline.get_text().strip()
-            news_date = date.get_text().strip()
+            news_date = date.get_text().strip() if date else "Date not available"
 
             # Filter out irrelevant entries
             if 'bbc' not in news_title.lower():
                 news_list.append({'headline': news_title, 'date': news_date})
+    
+    # Debugging: Check if articles were found
+    if not news_list:
+        st.warning("No articles found during scraping. The structure of the website might have changed.")
+        return pd.DataFrame()  # Return an empty DataFrame if no articles found
 
     # Convert to DataFrame
     news_df = pd.DataFrame(news_list)
@@ -84,7 +89,7 @@ def main():
     st.markdown(
         """
         ---
-        Made with [Streamlit](https://streamlit.io) and [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/).
+        Made with ❤️ using [Streamlit](https://streamlit.io) and [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/).
         """
     )
 
