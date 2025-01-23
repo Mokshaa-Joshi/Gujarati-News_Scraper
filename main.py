@@ -86,7 +86,7 @@ def main():
         if filtered_articles:
             st.subheader(f"Search Results for '{query}':")
             for article in filtered_articles:
-                st.markdown(f"### [{article['title']}]({article[' base_url + link ']})")
+                st.markdown(f"### [{article['title']}]({article['link ']})")
                 st.write(article['summary'])
                 st.write(article['content'])  # Display the full article content
         else:
