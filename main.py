@@ -85,7 +85,7 @@ def main():
             st.subheader(f"Search Results for '{query}':")
             for article in filtered_articles:
                 # Use HTML to create a clickable link that opens in a new tab
-                st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
+                #st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
                 st.write(article['summary'])
                 st.write(article['content'])  # Display the full article content
         else:
