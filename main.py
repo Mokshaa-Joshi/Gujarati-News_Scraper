@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import streamlit as st
 from deep_translator import GoogleTranslator
+import re
+from datetime import datetime
 
 def scrape_articles():
     base_url = "https://www.gujaratsamachar.com/"
@@ -22,14 +24,16 @@ def scrape_articles():
         if link.startswith('/'):
             link = base_url + link
         
-        content = scrape_article_content(link)
+        content, date, day = scrape_article_content(link)
         
         if title and link and content:
             articles.append({
                 'title': title,
                 'link': link,
                 'summary': summary,
-                'content': content
+                'content': content,
+                'date': date,
+                'day': day
             })
     
     return articles
@@ -38,7 +42,7 @@ def scrape_article_content(link):
     try:
         article_response = requests.get(link)
         if article_response.status_code != 200:
-            return "Error loading article content."
+            return "Error loading article content.", "", ""
         
         article_soup = BeautifulSoup(article_response.content, 'html.parser')
         
@@ -49,9 +53,20 @@ def scrape_article_content(link):
         else:
             content = content_div.text.strip() if content_div else "Content not available."
         
-        return content
+        content_in_gujarati = re.sub(r'[^\u0A80-\u0AFF\s]', '', content)
+        
+        date_div = article_soup.find('span', class_='date')
+        date = date_div.text.strip() if date_div else ""
+        
+        try:
+            date_obj = datetime.strptime(date, '%d-%m-%Y')
+            day = date_obj.strftime('%A')
+        except:
+            day = ""
+        
+        return content_in_gujarati, date, day
     except Exception as e:
-        return f"Error: {e}"
+        return f"Error: {e}", "", ""
 
 def translate_to_gujarati(query):
     try:
@@ -88,6 +103,7 @@ def main():
                 st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
                 st.write(article['summary'])
                 st.write(article['content'])
+                st.write(f"Date: {article['date']} | Day: {article['day']}")
         else:
             st.warning(f"No articles found for '{query}'.")
     else:
