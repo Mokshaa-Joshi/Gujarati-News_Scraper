@@ -27,13 +27,19 @@ def scrape_articles():
         # Scrape full content of the article
         content = scrape_article_content(link)
         
-        articles.append({
-            'title': title,
-            'link': link,
-            'summary': summary,
-            'content': content  # Add content here
-        })
+        # Check if we have the content
+        if title and link and content:
+            articles.append({
+                'title': title,
+                'link': link,
+                'summary': summary,
+                'content': content  # Add content here
+            })
     
+    # Debugging: Check how many articles are scraped and print titles
+    print(f"Scraped {len(articles)} articles.")
+    for article in articles:
+        print(f"Title: {article['title']} | Summary: {article['summary']}")
     return articles
 
 # Scrape the full article content from the article page
@@ -62,6 +68,8 @@ def scrape_article_content(link):
 
 # Search articles based on the query
 def search_articles(query, articles):
+    # Debugging: Check articles being filtered
+    print(f"Filtering articles based on query: {query}")
     return [article for article in articles if query.lower() in article['title'].lower() or query.lower() in article['summary'].lower()]
 
 # Streamlit interface
@@ -78,12 +86,15 @@ def main():
         st.warning("No articles found. Please try again later.")
         return
     
+    # Debugging: Check how many articles we have before filtering
+    print(f"Total articles before filtering: {len(articles)}")
+    
     if query:
         filtered_articles = search_articles(query, articles)
         if filtered_articles:
             st.subheader(f"Search Results for '{query}':")
             for article in filtered_articles:
-                # Ensure that the full URL (base + relative link) is used in the markdown
+                # Display the article title as a clickable link
                 st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
                 st.write(article['summary'])
                 st.write(article['content'])  # Display the full article content
