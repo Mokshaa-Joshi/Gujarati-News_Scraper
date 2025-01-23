@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import streamlit as st
 from deep_translator import GoogleTranslator
+import re
 
 def scrape_articles():
     base_url = "https://www.gujaratsamachar.com/"
@@ -49,7 +50,9 @@ def scrape_article_content(link):
         else:
             content = content_div.text.strip() if content_div else "Content not available."
         
-        return content
+        content_in_gujarati = re.sub(r'[^\u0A80-\u0AFF\s]', '', content)
+        
+        return content_in_gujarati
     except Exception as e:
         return f"Error: {e}"
 
