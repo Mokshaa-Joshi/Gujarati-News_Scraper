@@ -1,97 +1,63 @@
+# Import required libraries
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
-from datetime import datetime
-import pandas as pd
 
-# Function to scrape articles from BBC News
-def fetch_articles(keyword=None):
-    url = 'https://www.bbc.com/news'
-    headers = {'User-agent': 'Mozilla/5.0'}
-    response = requests.get(url, headers=headers)
+# Scrape articles from Gujarat Samachar website
+def scrape_articles():
+    base_url = "https://www.gujaratsamachar.com/"
+    response = requests.get(base_url)
     
     if response.status_code != 200:
-        raise Exception(f"Failed to fetch BBC News page (status code: {response.status_code}).")
-    
-    # Parse the HTML content
+        st.error("Failed to retrieve the website. Please check the URL or your internet connection.")
+        return []
+
     soup = BeautifulSoup(response.content, 'html.parser')
-    news_list = []
-
-    # Extract articles
-    for news in soup.find_all('div', class_='sc-8ea7699c-'):
-        headline = news.find('h2', class_='sc-8ea7699c-3 hlhXXQ')
-        #date = news.find('time', class_='qa-status-date')
-
-        if headline:
-            news_title = headline.get_text().strip()
-            #news_date = date.get_text().strip() if date else "Date not available"
-
-            # Filter out irrelevant entries
-            if 'bbc' not in news_title.lower():
-                news_list.append({'headline': news_title, 'date': news_date})
     
-    # Debugging: Check if articles were found
-    if not news_list:
-        st.warning("No articles found during scraping. The structure of the website might have changed.")
-        return pd.DataFrame()  # Return an empty DataFrame if no articles found
+    # Modify the selectors below to match the Gujarat Samachar website's structure
+    articles = []
+    for article in soup.find_all('div', class_='news-box'):  # Example: Update the class to match the actual site
+        title = article.find('a', class_='theme-link news-title').text.strip()
+        link = article.find('a')['href']
+        summary = article.find('p').text.strip() if article.find('p') else ""
+        
+        articles.append({
+            'title': title,
+            'link': link,
+            'summary': summary
+        })
+    
+    return articles
 
-    # Convert to DataFrame
-    news_df = pd.DataFrame(news_list)
+# Search articles based on the query
+def search_articles(query, articles):
+    return [article for article in articles if query.lower() in article['title'].lower() or query.lower() in article['summary'].lower()]
 
-    # Filter articles based on the keyword
-    if keyword:
-        keyword = keyword.lower()
-        news_df = news_df[news_df['headline'].str.contains(keyword, case=False, na=False)]
-
-    return news_df
-
-# Streamlit App
+# Streamlit interface
 def main():
-    # Set Streamlit page config
-    st.set_page_config(page_title="BBC News Article Search", page_icon="📰", layout="wide")
+    st.title("Gujarat Samachar Article Search")
+    st.write("Enter a keyword to search for relevant articles.")
 
-    # App title and description
-    st.title("📰 BBC News Article Search")
-    st.markdown(
-        """
-        Welcome to the **BBC News Article Search** app!  
-        Scrape the latest news headlines from BBC News and search for specific topics of interest.
-        """
-    )
-
-    # Current date and time
-    st.write(f"**Source:** [BBC News](https://www.bbc.com/news)  \n**Date & Time:** {datetime.now().strftime('%b %d, %Y | %I:%M %p')}")
-
-    # Search input
-    keyword = st.text_input("🔍 Enter a keyword to search for news articles:")
-
-    # Search button
-    if st.button("Search"):
-        st.write("Fetching news articles...")
-
-        try:
-            # Fetch and filter articles
-            articles = fetch_articles(keyword)
-
-            if not articles.empty:
-                st.success(f"Found {len(articles)} articles for '{keyword}'")
-                # Display articles in Streamlit
-                for _, row in articles.iterrows():
-                    st.markdown(f"### {row['headline']}")
-                    st.write(f"🕒 {row['date']}")
-                    st.markdown("---")
-            else:
-                st.warning(f"No articles found for '{keyword}'. Try a different keyword.")
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-
-    # Footer
-    st.markdown(
-        """
-        ---
-        Made with ❤️ using [Streamlit](https://streamlit.io) and [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/).
-        """
-    )
+    # Input field for the search query
+    query = st.text_input("Search for articles", "")
+    
+    # Scrape articles and search
+    articles = scrape_articles()
+    if not articles:
+        st.warning("No articles found. Please try again later.")
+        return
+    
+    if query:
+        filtered_articles = search_articles(query, articles)
+        if filtered_articles:
+            st.subheader(f"Search Results for '{query}':")
+            for article in filtered_articles:
+                st.markdown(f"### [{article['title']}]({article['link']})")
+                st.write(article['summary'])
+        else:
+            st.warning(f"No articles found for '{query}'.")
+    else:
+        st.info("Please enter a search term.")
 
 if __name__ == "__main__":
     main()
