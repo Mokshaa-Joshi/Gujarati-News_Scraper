@@ -1,4 +1,3 @@
-# Import required libraries
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
@@ -21,13 +20,35 @@ def scrape_articles():
         link = article.find('a', class_='theme-link')['href']
         summary = article.find('p').text.strip() if article.find('p') else ""
         
+        # Scrape full content of the article
+        content = scrape_article_content(link)
+        
         articles.append({
             'title': title,
             'link': link,
-            'summary': summary
+            'summary': summary,
+            'content': content  # Add content here
         })
     
     return articles
+
+# Scrape the full article content from the article page
+def scrape_article_content(link):
+    try:
+        # Send request to the article page
+        article_response = requests.get(link)
+        if article_response.status_code != 200:
+            return "Error loading article content."
+        
+        article_soup = BeautifulSoup(article_response.content, 'html.parser')
+        
+        # Find the content using the correct selector for the article body
+        content_div = article_soup.find('div', class_='article-body')  # Modify this selector based on actual structure
+        content = content_div.text.strip() if content_div else "Content not available."
+        
+        return content
+    except Exception as e:
+        return f"Error: {e}"
 
 # Search articles based on the query
 def search_articles(query, articles):
@@ -54,6 +75,7 @@ def main():
             for article in filtered_articles:
                 st.markdown(f"### [{article['title']}]({article['link']})")
                 st.write(article['summary'])
+                st.write(article['content'])  # Display the full article content
         else:
             st.warning(f"No articles found for '{query}'.")
     else:
