@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
+from deep_translator import GoogleTranslator
 
 # Scrape articles from Gujarat Samachar website
 def scrape_articles():
@@ -36,10 +37,6 @@ def scrape_articles():
                 'content': content  # Add content here
             })
     
-    # Debugging: Check how many articles are scraped and print titles
-    print(f"Scraped {len(articles)} articles.")
-    for article in articles:
-        print(f"Title: {article['title']} | Summary: {article['summary']}")
     return articles
 
 # Scrape the full article content from the article page
@@ -66,10 +63,16 @@ def scrape_article_content(link):
     except Exception as e:
         return f"Error: {e}"
 
+# Function to translate English query to Gujarati
+def translate_to_gujarati(query):
+    try:
+        translated_query = GoogleTranslator(source='en', target='gu').translate(query)
+        return translated_query
+    except Exception as e:
+        return f"Translation Error: {e}"
+
 # Search articles based on the query
 def search_articles(query, articles):
-    # Debugging: Check articles being filtered
-    print(f"Filtering articles based on query: {query}")
     return [article for article in articles if query.lower() in article['title'].lower() or query.lower() in article['summary'].lower()]
 
 # Streamlit interface
@@ -80,17 +83,22 @@ def main():
     # Input field for the search query
     query = st.text_input("Search for articles", "")
     
+    # Translate the query if it's in English
+    if query:
+        # Translate English to Gujarati before searching
+        translated_query = translate_to_gujarati(query)
+        st.write(f"Translated query (Gujarati): {translated_query}")
+    else:
+        translated_query = ""
+
     # Scrape articles and search
     articles = scrape_articles()
     if not articles:
         st.warning("No articles found. Please try again later.")
         return
     
-    # Debugging: Check how many articles we have before filtering
-    print(f"Total articles before filtering: {len(articles)}")
-    
-    if query:
-        filtered_articles = search_articles(query, articles)
+    if translated_query:
+        filtered_articles = search_articles(translated_query, articles)
         if filtered_articles:
             st.subheader(f"Search Results for '{query}':")
             for article in filtered_articles:
