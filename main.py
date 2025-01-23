@@ -16,60 +16,25 @@ def scrape_articles():
     
     # Modify the selectors below to match the Gujarat Samachar website's structure
     articles = []
-    for article in soup.find_all('div', class_='news-box'):  # Example: Update the class to match the actual site
+    for article in soup.find_all('div', class_='news-box'):  # Adjust this selector as needed
         title = article.find('a', class_='theme-link news-title').text.strip()
         link = article.find('a', class_='theme-link')['href']
         summary = article.find('p').text.strip() if article.find('p') else ""
         
-        # Ensure the link is absolute (complete URL)
-        if link.startswith('/'):
-            link = base_url + link
-        
-        # Scrape full content of the article
-        content = scrape_article_content(link)
-        
-        # Check if we have the content
-        if title and link and content:
-            articles.append({
-                'title': title,
-                'link': link,
-                'summary': summary,
-                'content': content  # Add content here
-            })
+        articles.append({
+            'title': title,
+            'link': link,
+            'summary': summary
+        })
     
+    print(f"Scraped Articles: {len(articles)}")  # Print the number of articles scraped
     return articles
 
-# Scrape the full article content from the article page
-def scrape_article_content(link):
-    try:
-        # Send request to the article page
-        article_response = requests.get(link)
-        if article_response.status_code != 200:
-            return "Error loading article content."
-        
-        article_soup = BeautifulSoup(article_response.content, 'html.parser')
-        
-        # Try finding the article body in different ways if no class is available
-        content_div = article_soup.find('div')  # Try targeting the first div
-        if not content_div:
-            # If no div found, look for paragraphs or other text-containing elements
-            content_elements = article_soup.find_all(['p', 'h1', 'h2', 'h3', 'ul', 'ol'])
-            content = ' '.join([element.get_text().strip() for element in content_elements])
-        else:
-            # If a div is found, extract its content
-            content = content_div.text.strip() if content_div else "Content not available."
-        
-        return content
-    except Exception as e:
-        return f"Error: {e}"
-
-# Function to translate English query to Gujarati
-def translate_to_gujarati(query):
-    try:
-        translated_query = GoogleTranslator(source='en', target='gu').translate(query)
-        return translated_query
-    except Exception as e:
-        return f"Translation Error: {e}"
+# Translate query if it's in English
+def translate_query(query, lang="gu"):
+    if lang != "en":
+        return GoogleTranslator(source='auto', target=lang).translate(query)
+    return query
 
 # Search articles based on the query
 def search_articles(query, articles):
@@ -83,31 +48,26 @@ def main():
     # Input field for the search query
     query = st.text_input("Search for articles", "")
     
-    # Translate the query if it's in English
-    if query:
-        # Translate English to Gujarati before searching
-        translated_query = translate_to_gujarati(query)
-        st.write(f"Translated query (Gujarati): {translated_query}")
-    else:
-        translated_query = ""
-
     # Scrape articles and search
     articles = scrape_articles()
     if not articles:
         st.warning("No articles found. Please try again later.")
         return
     
-    if translated_query:
+    if query:
+        translated_query = translate_query(query, lang="gu")  # Translate to Gujarati if needed
+        st.write(f"Searching for: {translated_query}")
+        
         filtered_articles = search_articles(translated_query, articles)
+        print(f"Filtered Articles: {len(filtered_articles)}")  # Print the number of articles after filtering
+        
         if filtered_articles:
-            st.subheader(f"Search Results for '{query}':")
+            st.subheader(f"Search Results for '{translated_query}':")
             for article in filtered_articles:
-                # Display the article title as a clickable link
-                st.markdown(f"### <a href='{article['link']}' target='_blank'>{article['title']}</a>", unsafe_allow_html=True)
+                st.markdown(f"### [{article['title']}]({article['link']})")
                 st.write(article['summary'])
-                st.write(article['content'])  # Display the full article content
         else:
-            st.warning(f"No articles found for '{query}'.")
+            st.warning(f"No articles found for '{translated_query}'.")
     else:
         st.info("Please enter a search term.")
 
